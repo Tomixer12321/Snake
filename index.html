@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="sk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snake</title>
+    <style>
+      body {
+        background: #ffbf00;
+        text-align: center;
+      }
+      canvas {
+        border: 10px solid #f7347a;
+      }
+      h1 {
+        font-family: "avenir next", verdana;
+        font-weight: bold;
+        font-size: 4em;
+        margin-top: 0;
+        letter-spacing: -10px;
+      }
+      h1.stronge {
+        font-size: 1.35rem;
+        display: inline-block;
+        margin: 0.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas width="600" height="600"></canvas>
+    <h1>0</h1>
+
+    <script>
+      //liseners
+      document.addEventListener("keydown", keypush);
+
+      //canvas
+      const canvas = document.querySelector(`canvas`);
+      const title = document.querySelector(`h1`);
+      const ctx = canvas.getContext("2d");
+
+      //player
+      const tilesize = 50;
+      let snakespeed = tilesize;
+      let snakeposx = 0;
+      let snakeposy = canvas.height / 2;
+
+      //game
+      let gameisrunning=true
+
+      let fps = 15;
+      let score = 0;
+
+      const titlecountx = canvas.width / tilesize;
+      const titlecounty = canvas.height / tilesize;
+
+
+
+      let velocitx = 1;
+      let velocity = 0;
+
+      let tail = [];
+      let snakelength = 4;
+
+      let foodposx = 0;
+      let foodposy = 0;
+
+      //loop
+      function gameloop(parems) {
+        if(gameisrunning===true){
+          drawstuff();
+        movestuff();
+        setTimeout(gameloop, 1000 / fps);
+        }
+      }
+      resetfood();
+      gameloop();
+
+      //move everithing
+      function movestuff() {
+        snakeposx += snakespeed * velocitx;
+        snakeposy += snakespeed * velocity;
+
+        //wall collision
+        if (snakeposx > canvas.width - tilesize) {
+          snakeposx = 0;
+        }
+        if (snakeposx < 0) {
+          snakeposx = canvas.width;
+        }
+        if (snakeposy > canvas.height - tilesize) {
+          snakeposy = 0;
+        }
+        if (snakeposy < 0) {
+          snakeposy = canvas.height;
+        }
+        //game over
+        tail.forEach((snakepart) => {
+          if (snakeposx === snakepart.x && snakeposy === snakepart.y) {
+            gameover()
+          }
+        });
+
+        //tail
+        tail.push({ x: snakeposx, y: snakeposy });
+        //forget earliest part of snake
+        tail = tail.slice(-1 * snakelength);
+
+        //food collision
+        if (snakeposx === foodposx && snakeposy === foodposy) {
+          title.textContent = ++score;
+          snakelength++;
+          resetfood();
+        }
+      }
+
+      //draw everithing
+      function drawstuff() {
+        rectangle("#ffbf00", 0, 0, canvas.width, canvas.height);
+        //grid
+        drawgrid();
+        //tail
+        tail.forEach((snakepart) =>
+          rectangle("#555", snakepart.x, snakepart.y, tilesize, tilesize)
+        );
+        //snake
+        rectangle("black", snakeposx, snakeposy, tilesize, tilesize);
+        //food
+        rectangle("#00bfff", foodposx, foodposy, tilesize, tilesize);
+      }
+      //draw rectangle
+      function rectangle(color, x, y, width, height) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y, width, height);
+      }
+      //randomize food position
+      function resetfood() {
+        if(snakelength===titlecountx*titlecounty){
+          gameover()
+        }
+
+
+        foodposx = Math.floor(Math.random() * titlecountx) * tilesize;
+        foodposy = Math.floor(Math.random() * titlecounty) * tilesize;
+
+        //dont spawn food on snakes head
+        if(foodposx===snakeposx&&foodposy===snakeposy){
+          resetfood()
+        }
+        //dont spawn food on any snake head
+        if(tail.some(snakepart=>snakepart.x===foodposx&&snakepart.y===foodposy)){
+          resetfood()
+        }
+      }
+
+      //keyboard
+      function keypush(event) {
+        switch (event.key) {
+          case "w":
+            if (velocity !== 1) {
+              velocitx = 0;
+              velocity = -1;
+              break;
+            }
+        }
+        switch (event.key) {
+          case "s":
+            if (velocity !== -1) {
+              velocitx = 0;
+              velocity = 1;
+              break;
+            }
+        }
+        switch (event.key) {
+          case "a":
+            if (velocitx !== 1) {
+              velocitx = -1;
+              velocity = 0;
+              break;
+            }
+        }
+        switch (event.key) {
+          case "d":
+            if (velocitx !== -1) {
+              velocitx = 1;
+              velocity = 0;
+            }
+              break;
+              default:
+                //restart game
+                if(!gameisrunning) location.reload()
+                break
+        }
+      }
+      function drawgrid() {
+        for (let i = 0; i < titlecountx; i++) {
+          for (let j = 0; j < titlecounty; j++) {
+            rectangle(
+              "#fff",
+              tilesize * i,
+              tilesize * j,
+              tilesize - 1,
+              tilesize - 1
+            );
+          }
+        }
+      }
+      //keyboar restarts game
+      function gameover(){
+        title.innerHTML=`<strong>game over</strong>`
+            gameisrunning=false
+      }
+    </script>
+  </body>
+</html>
